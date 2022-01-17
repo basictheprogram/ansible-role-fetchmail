@@ -6,5 +6,6 @@ fetchmail_config_mode: '0600'
 fetchmail_service_enabled: true
 fetchmail_service_name: fetchmail.service
 fetchmail_service_state: started
+fetchmail_logfile: /var/log/fetchmail.log
 fetchmail_packages:
   - fetchmail

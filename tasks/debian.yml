@@ -1,0 +1,58 @@
+---
+- name: Install required packages for Fetchmail
+  package:
+    name: "{{ fetchmail_packages }}"
+    state: present
+    install_recommends: no
+    force_apt_get: yes
+  tags:
+    - fetchmail
+    - packages
+
+- name: Ensure Fetchmail can start
+  ansible.builtin.lineinfile:
+    path: /etc/default/fetchmail
+    regexp: '^START_DAEMON='
+    line: 'START_DAEMON=yes'
+  when: fetchmail_service_enabled
+  tags: fetchmail
+
+- name: Ensure Fetchmail can not start
+  ansible.builtin.lineinfile:
+    path: /etc/default/fetchmail
+    regexp: '^START_DAEMON='
+    line: 'START_DAEMON=no'
+  when: not fetchmail_service_enabled
+  tags: fetchmail
+
+# XXX: This is ugle, refactor into a template
+#
+- name: Copy Fetchmail configuration
+  copy:
+    content: "{{ fetchmail_config | default('# No config') }}"
+    dest: "{{ fetchmail_config_dir | default('/etc') }}/fetchmailrc"
+    owner: "{{ fetchmail_config_owner | default('root') }}"
+    group: "{{ fetchmail_config_group | default('root') }}"
+    mode: "{{ fetchmail_config_mode | default('0600') }}"
+  notify: restart fetchmail
+  tags: fetchmail
+
+- name: Configure Fetchmail service
+  service:
+    name: "{{ fetchmail_service_name }}"
+    state: "{{ fetchmail_service_state }}"
+    enabled: "{{ fetchmail_service_enabled }}"
+  tags:
+    - configuration
+    - fetchmail
+    - policy
+
+- name: Configure Fetchmail logfile
+  ansible.builtin.file:
+    path: "{{ fetchmail_logfile }}"
+    state: touch
+    owner: "{{ fetchmail_config_owner }}"
+    group: "{{ fetchmail_config_group }}"
+    mode: '0600'
+  notify: restart fetchmail
+  tags: fetchmail

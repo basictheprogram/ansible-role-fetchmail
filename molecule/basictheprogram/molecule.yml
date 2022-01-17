@@ -1,0 +1,24 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint: |
+  set -e
+  yamllint `git ls-files '*.yaml' '*.yml'`
+  ansible-lint
+  flake8
+platforms:
+  - name: ubuntu-21.10
+    image: "basictheprogram/docker-ubuntu2110-ansible:latest"
+    command: "/lib/systemd/systemd"
+    capabilities:
+      - SYS_ADMIN
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra
